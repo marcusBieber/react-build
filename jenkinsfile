@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         EC2_USER = 'ubuntu'
-        EC2_HOST = '3.121.109.48' // EC2-IP anpassen
+        EC2_HOST = '18.197.106.57' // EC2-IP anpassen
         DEPLOY_PATH = '/var/www/nginx/react-app' // Nginx-Standardverzeichnis
         SSH_CREDENTIALS = 'jenkins-ec2-key'  
         APP_URL = 'http://3.121.109.48' 
@@ -48,23 +48,29 @@ pipeline {
                             echo "Erstelle Deployment-Verzeichnis..." &&
                             sudo mkdir -p ${DEPLOY_PATH} &&
                             sudo chown -R ubuntu:ubuntu ${DEPLOY_PATH} &&
-                            sudo rm -rf ${DEPLOY_PATH}/*'
+                            sudo rm -rf ${DEPLOY_PATH}/* &&
+                            echo "Entferne Standard-Nginx-Site..." &&
+                            sudo rm -f /etc/nginx/sites-enabled/default
+                            '
                         
                         echo "Kopiere neuen Build auf EC2..."
                         scp -o StrictHostKeyChecking=no -r dist/* ${EC2_USER}@${EC2_HOST}:${DEPLOY_PATH}
 
                         ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_HOST} '
-                            echo "Konfiguriere Nginx für React-App..." &&
-                            echo "
-                            server {
-                                listen 80;
-                                server_name _;
-                                root ${DEPLOY_PATH};
-                                index index.html;
-                                location / {
-                                    try_files \$uri /index.html;
-                                }
-                            }" | sudo tee /etc/nginx/sites-available/react-app &&
+                            sudo tee /etc/nginx/sites-available/react-app > /dev/null <<EOT
+server {
+    listen 80;
+    server_name _;
+    root ${DEPLOY_PATH};
+    index index.html;
+    
+    location / {
+        try_files \\\$uri /index.html;
+    }
+
+    error_page 404 /index.html;
+}
+EOT
                             sudo ln -sf /etc/nginx/sites-available/react-app /etc/nginx/sites-enabled/react-app &&
                             sudo systemctl restart nginx'
                         """
