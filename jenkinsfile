@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         EC2_USER = 'ubuntu'
-        EC2_HOST = '18.197.106.57' // EC2-IP anpassen
+        EC2_HOST = '3.67.170.78' // EC2-IP anpassen
         DEPLOY_PATH = '/var/www/nginx/react-app' // Nginx-Standardverzeichnis
         SSH_CREDENTIALS = 'jenkins-ec2-key'  
-        APP_URL = 'http://3.121.109.48' 
+        APP_URL = 'http://3.67.170.78' 
     }
     
     tools {
@@ -74,6 +74,19 @@ EOT
                             sudo ln -sf /etc/nginx/sites-available/react-app /etc/nginx/sites-enabled/react-app &&
                             sudo systemctl restart nginx'
                         """
+                    }
+                }
+            }
+        }
+
+        stage('Check Website Availability') {
+            steps {
+                script {
+                    def response = sh(script: "curl -o /dev/null -s -w \"%{http_code}\" ${APP_URL}", returnStdout: true).trim()
+                    if (response != "200") {
+                        error("Website ist nicht erreichbar! HTTP-Status: ${response}")
+                    } else {
+                        echo "Website erfolgreich erreicht! HTTP-Status: ${response}"
                     }
                 }
             }
