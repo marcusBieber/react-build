@@ -3,10 +3,10 @@ pipeline {
 
     environment {
         EC2_USER = 'ubuntu'
-        EC2_HOST = '3.67.170.78' // EC2-IP anpassen
+        EC2_HOST = '35.159.66.99' // EC2-IP anpassen
         DEPLOY_PATH = '/var/www/nginx/react-app' // Nginx-Standardverzeichnis
         SSH_CREDENTIALS = 'jenkins-ec2-key'  
-        APP_URL = 'http://3.67.170.78' 
+        APP_URL = 'http://35.159.66.99' 
     }
     
     tools {
